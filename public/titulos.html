@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Títulos Baixados</title>
+  <link rel="stylesheet" href="titulos.css">
+</head>
+<body>
+  <h2>Títulos Baixados</h2>
+
+  <!-- Filtros de Pesquisa -->
+  <form class="filtros" id="form-filtros">
+    <div class="filtros-row">
+      <label>Período de Baixa:
+        <input type="date" id="filtro-baixa-inicio">
+        até
+        <input type="date" id="filtro-baixa-fim">
+      </label>
+      <label>Fornecedor:
+        <input type="text" id="filtro-fornecedor" placeholder="Nome do Fornecedor">
+      </label>
+      <label>NF:
+        <input type="text" id="filtro-nf" placeholder="Nota Fiscal">
+      </label>
+      <label>Transação:
+        <input type="text" id="filtro-transacao" placeholder="Número da Transação">
+      </label>
+      <button type="button" id="btn-pesquisar">Pesquisar</button>
+      <button type="button" id="btn-limpar">Limpar</button>
+    </div>
+  </form>
+
+  <!-- Tabela de Resultados -->
+  <div class="tabela-container">
+    <table id="tabela-titulos" class="display nowrap">
+      <thead>
+        <tr>
+          <th>Transação</th>
+          <th>Data Baixa</th>
+          <th>Qtde Créditos</th>
+          <th>Qtde Débitos</th>
+          <th>Total Créditos</th>
+          <th>Total Débitos</th>
+          <th>Saldo</th>
+          <th>Detalhes</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- Detalhes -->
+  <div id="detalhes" style="display:none;"></div>
+
+  <script>
+    // Função para pegar a data local no formato YYYY-MM-DD
+    function dataHoje() {
+      return new Date().toLocaleDateString('fr-CA');
+    }
+    const hoje = dataHoje();
+    document.getElementById('filtro-baixa-inicio').value = hoje;
+    document.getElementById('filtro-baixa-fim').value = hoje;
+
+    // Função para formatar data para dd/mm/aaaa
+    function formatarDataBR(data) {
+      if (!data) return '';
+      const [ano, mes, dia] = data.split('-');
+      return `${dia}/${mes}/${ano}`;
+    }
+
+    // Função para formatar valor para 0,00
+    function formatarValorBR(valor) {
+      return Number(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function carregarDados(filtros = {}) {
+      fetch('/api/pagamento')
+        .then(res => res.json())
+        .then(dados => {
+          const $tbody = document.querySelector('#tabela-titulos tbody');
+          $tbody.innerHTML = '';
+
+          const filtrado = dados.filter(p => {
+            if (filtros.baixaInicio && p.dataBaixa < filtros.baixaInicio) return false;
+            if (filtros.baixaFim && p.dataBaixa > filtros.baixaFim) return false;
+            if (filtros.fornecedor && p.fornecedor && !p.fornecedor.toLowerCase().includes(filtros.fornecedor.toLowerCase())) return false;
+            if (filtros.nf && p.nf && !p.nf.includes(filtros.nf)) return false;
+            if (filtros.transacao && !p.transacao.includes(filtros.transacao)) return false;
+            return true;
+          });
+
+          filtrado.forEach((p, idx) => {
+            const saldo = Number(p.Saldo);
+            const saldoClass = saldo >= 0 ? 'saldo-positivo' : 'saldo-negativo';
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${p.transacao}</td>
+              <td>${formatarDataBR(p.dataBaixa)}</td>
+              <td>${p.qtdeTitCred}</td>
+              <td>${p.qtdeTitDeb}</td>
+              <td>${formatarValorBR(p.ValorTotalCred)}</td>
+              <td>${formatarValorBR(p.ValorTotaldeb)}</td>
+              <td class="${saldoClass}">${formatarValorBR(p.Saldo)}</td>
+              <td><button class="btn-detalhes" data-idx="${idx}">Detalhes</button></td>
+            `;
+            $tbody.appendChild(tr);
+          });
+
+          document.querySelectorAll('.btn-detalhes').forEach(btn => {
+            btn.addEventListener('click', function() {
+              const idx = this.getAttribute('data-idx');
+              const p = filtrado[idx];
+              document.getElementById('detalhes').style.display = 'block';
+              document.getElementById('detalhes').innerHTML =
+                `<b>Transação:</b> ${p.transacao}<br>
+                 <b>Data Baixa:</b> ${formatarDataBR(p.dataBaixa)}<br>
+                 <b>Qtde Créditos:</b> ${p.qtdeTitCred}<br>
+                 <b>Qtde Débitos:</b> ${p.qtdeTitDeb}<br>
+                 <b>Total Créditos:</b> ${formatarValorBR(p.ValorTotalCred)}<br>
+                 <b>Total Débitos:</b> ${formatarValorBR(p.ValorTotaldeb)}<br>
+                 <b>Saldo:</b> <span class="${Number(p.Saldo) >= 0 ? 'saldo-positivo' : 'saldo-negativo'}">${formatarValorBR(p.Saldo)}</span>`;
+            });
+          });
+        });
+    }
+
+    document.getElementById('btn-pesquisar').addEventListener('click', () => {
+      const filtros = {
+        baixaInicio: document.getElementById('filtro-baixa-inicio').value,
+        baixaFim: document.getElementById('filtro-baixa-fim').value,
+        fornecedor: document.getElementById('filtro-fornecedor').value,
+        nf: document.getElementById('filtro-nf').value,
+        transacao: document.getElementById('filtro-transacao').value,
+      };
+      carregarDados(filtros);
+    });
+
+    document.getElementById('btn-limpar').addEventListener('click', () => {
+      document.getElementById('form-filtros').reset();
+      document.getElementById('filtro-baixa-inicio').value = hoje;
+      document.getElementById('filtro-baixa-fim').value = hoje;
+      carregarDados();
+    });
+
+    carregarDados();
+  </script>
+  <style>
+    .saldo-positivo { color: #2e7d32; font-weight: bold; }
+    .saldo-negativo { color: #c62828; font-weight: bold; }
+  </style>
+</body>
+</html>

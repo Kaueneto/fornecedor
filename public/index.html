@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <meta charset="UTF-8">
+  <title>Controle de Crédito e Débito</title>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/colreorder/1.6.2/css/colReorder.dataTables.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="estilos.css">
+
+</head>
+
+
+<body>
+  <h2>Controle de crédito e débito de fornecedores</h2>
+
+  <!-- Botões principais -->
+  <div>
+<button id="btn-cadastrar-fornecedor">Cadastrar fornecedor</button>    <button id="btn-novo" class="btn btn-success">Novo</button>
+    <a href="titulos.html" target="_blank">
+      <button id="btn-titulos">Títulos Baixados</button>
+    </a>
+    <a href="posicao.html" target="_blank">
+      <button id="btn-posicao-financeira">Extrato</button>
+    </a>
+  </div>
+
+</a>
+
+  <!-- Filtros -->
+  <form id="filtros">
+  <!-- Primeira linha: campos de texto -->
+  <div style="display: flex; gap: 8px; align-items: flex-end; margin-bottom: 4px;">
+    <div>
+      <label for="filtro-codfornecedor">Cód fornecedor</label>
+      <input type="text" class="inputt" id="filtro-codfornecedor" style="width: 80px;">
+    </div>
+    <div>
+      <label for="filtro-parceiro">Nome fornecedor</label>
+      <input type="text" class="inputt" id="filtro-parceiro" style="width: 220px;">
+    </div>
+    <div>
+      <label for="filtro-doc">doc/nf</label>
+      <input type="text" class="inputt" id="filtro-doc" style="width: 90px;">
+    </div>
+    <div>
+      <label for="filtro-filial">filial</label>
+      <input type="text" class="inputt" id="filtro-filial" style="width: 80px;">
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px; margin-left: 16px;">
+      <div class="radio-group">
+        <label><input type="radio" name="tipo" value="todos" checked> todos</label><br>
+        <label><input type="radio" name="tipo" value="credito"> credito</label><br>
+        <label><input type="radio" name="tipo" value="debito"> debito</label>
+      </div>
+    </div>
+  </div>
+  <!-- Segunda linha: períodos -->
+  <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+    <div>
+      <label>Período de vencimento</label><br>
+      <input type="date" class="inputt" id="venc-inicio" style="width: 120px;"> até <input type="date" class="inputt" id="venc-fim" style="width: 120px;">
+    </div>
+    <div>
+      <label>Período de emissao</label><br>
+      <input type="date" class="inputt" id="emissao-inicio" style="width: 120px;"> até <input type="date" class="inputt" id="emissao-fim" style="width: 120px;">
+    </div>
+    <div>
+      <label>Período de inclusão</label><br>
+      <input type="date" class="inputt" id="inclusao-inicio" style="width: 120px;"> até <input type="date" class="inputt" id="inclusao-fim" style="width: 120px;">
+    </div>
+    <div style="flex: 1;"></div>
+    <div style="display: flex; align-items: flex-end; gap: 8px;">
+      <button type="button" id="btn-pesquisar">pesquisar</button>
+      <button type="button" id="btn-limpar">limpar</button>
+    </div>
+  </div>
+</form>
+
+  <!-- Créditos -->
+  <div class="tabela-container">
+    <h3>Créditos</h3>
+    <table id="tabela-creditos" class="display nowrap" style="width:100%">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Data Inclusão</th>
+          <th>Data Vencimento</th>
+          <th>NF</th>
+          <th>Valor</th>
+          <th>Data Emissão</th>
+          <th>Filial</th>
+          <th>Cód. Fornecedor</th>
+          <th>Nome Fornecedor</th>
+          <th>Histórico</th>
+          <th>Outras Observações</th>
+          <th>transacao</th>
+          <th>data Pagamento</th>
+
+
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div class="totais">
+      <p>Qtde: <span id="qtd-creditos">0</span></p>
+      <p>R$ <span id="total-creditos">R$ 0,00</span></p>
+      <p>Total selecionado: <span id="selecionado-creditos">R$ 0,00</span></p>
+    </div>
+  </div>
+
+  <!-- Débitos -->
+  <div class="tabela-container">
+    <h3>Débitos</h3>
+    <table id="tabela-debitos" class="display nowrap" style="width:100%">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Data Inclusão</th>
+          <th>Data Vencimento</th>
+          <th>NF</th>
+          <th>Valor</th>
+          <th>Data Emissão</th>
+          <th>Filial</th>
+          <th>Cód. Fornecedor</th>
+          <th>Nome Fornecedor</th>
+          <th>Histórico</th>
+          <th>Outras Observações</th>
+            <th>transacao</th>
+          <th>data Pagamento</th>
+
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div class="totais">
+      <p>Qtde: <span id="qtd-debitos">0</span></p>
+      <p>Total: <span id="total-debitos">R$ 0,00</span></p>
+      <p>Total selecionado: <span id="selecionado-debitos">R$ 0,00</span></p>
+      <p><strong></strong><span id="diferenca-selecionados" class="cordif">R$ 0,00</span></p>
+    </div>
+  </div>
+
+  <!-- Rodapé -->
+  <div class="rodape">
+  <button id="btn-excluir-selecionados" type="button">Excluir Selecionados</button>
+    <button id="btn-baixar">Baixar</button>
+    <button id="">Emitir relatorio</button>
+  </div>
+
+  <!-- Modal de Edição -->
+<div id="modal-editar">
+  <h3>Editar Lançamento</h3>
+  <form id="form-editar">
+    <input type="hidden" id="edit-id">
+
+    <div class="form-group radio-inline" style="margin-bottom: 12px;">
+      <label>Tipo lançamento:</label>
+      <label><input type="radio" name="edit-tipo" value="credito" required> <strong>Crédito</strong></label>
+      <label><input type="radio" name="edit-tipo" value="debito" required> <strong>Débito</strong></label>
+    </div>
+
+    <div class="linha-dupla">
+      <label>Fornecedor:</label>
+      <div class="campo-duplo">
+        <input type="text" id="edit-codfornecedor" placeholder="Código">
+        <input type="text" id="edit-nomefornecedor" placeholder="Nome Fornecedor">
+      </div>
+    </div>
+
+    <div class="linha-tripla">
+      <label>ValorㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤData EmissãoㅤㅤㅤㅤㅤㅤData Vencimento:</label>
+      <div class="campo-triplo">
+        <input type="number" id="edit-valor" step="0.01" placeholder="Valor">
+        <input type="date" id="edit-emissao">
+        <input type="date" id="edit-vencimento">
+      </div>
+    </div>
+
+    <div class="linha-dupla">
+      <label>Filial ㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤData de Inclusão:</label>
+      <div class="campo-duplo">
+        <input type="text" id="edit-filial" placeholder="Filial">
+        <input type="date" disabled id="edit-inclusao">
+      </div>
+    </div>
+
+    <div class="linha-simples">
+      <label>Histórico:</label>
+      <input type="text" id="edit-historico">
+    </div>
+
+    <div class="linha-simples">
+      <label>Outras Observações:</label>
+      <input type="text" id="edit-observacoes">
+    </div>
+
+    <div class="botoes">
+      <button type="submit">Salvar Alterações</button>
+      <button type="button" onclick="document.getElementById('modal-editar').style.display='none'">Cancelar</button>
+    </div>
+  </form>
+</div>
+
+
+
+
+
+
+
+<!-- Modal de Inclusão -->
+<div id="modal-incluir" class="modal">
+  <div class="modal-content">
+    <h4>Incluir Novo Lançamento</h4>
+    <form id="form-incluir">
+
+  <div class="form-group radio-inline">
+    <label>Tipo lançamento:</label>
+    <label><input type="radio" name="inc-tipo" value="credito" required checked> <strong>Crédito</strong></label>
+    <label><input type="radio" name="inc-tipo" value="debito" required> <strong>Débito</strong></label>
+  </div>
+
+      <!-- Linha 1 -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="inc-filial">Filial:</label>
+          <input type="text" id="inc-filial" class="form-control" required>
+        </div>
+        <div class="form-group small-input">
+          <label for="inc-codfornecedor">Código Fornecedor:</label>
+          <input type="text" id="inc-codfornecedor" class="form-control" required>
+        </div>
+        <div class="form-group large-input">
+          <label for="inc-nomefornecedor">Nome Fornecedor:</label>
+          <input type="text" id="inc-nomefornecedor" class="form-control" required>
+        </div>
+      </div>
+
+      <!-- Linha 2 -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="inc-valor">Valor:</label>
+          <input type="number" step="0.01" id="inc-valor" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label for="inc-vencimento">Data Vencimento:</label>
+          <input type="date" id="inc-vencimento" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label for="inc-emissao">Data Emissão:</label>
+          <input type="date" id="inc-emissao" class="form-control" required>
+        </div>
+      </div>
+
+      <!-- Linha 3 -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="inc-nf">NF:</label>
+          <input type="text" id="inc-nf" class="form-control">
+        </div>
+        <div class="form-group">
+          <label for="inc-inclusao">Data Inclusão:</label>
+          <input type="date" id="inc-inclusao" class="form-control" disabled>
+        </div>
+      </div>
+
+      <!-- Histórico e Observações -->
+      <div class="form-group">
+        <label for="inc-historico">Histórico:</label>
+        <input type="text" id="inc-historico" class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label for="inc-observacoes">Observações:</label>
+        <textarea id="inc-observacoes" class="form-control" rows="2"></textarea>
+      </div>
+
+      <!-- Botões -->
+      <div class="form-buttons">
+        <button type="submit" class="btn btn-primary">Salvar</button>
+<!-- ...outros botões... -->
+<button type="button" class="btn btn-warning" id="btn-limpar-inclusao">Limpar</button>
+        <button type="button" class="btn btn-secondary" id="btn-cancelar-inclusao">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<div id="modal-baixa" class="modal" style="display:none;">
+  <div class="modal-content" style="max-width:900px;">
+    <h3>Confirmar Baixa de Títulos</h3>
+    <div style="display: flex; gap: 24px;">
+      <div style="flex:1;">
+        <h4>Créditos Selecionados</h4>
+        <table id="tabela-baixa-creditos" class="display" style="width:100%">
+          <thead>
+            <tr>
+              <th>NF</th>
+              <th>Fornecedor</th>
+              <th>Valor</th>
+              <th>Vencimento</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div style="margin-top:8px;">
+          <label>Total de Créditos: <input type="text" id="total-baixa-creditos" readonly style="width:120px;">
+            <span style="margin-left:12px;">Qtde: <span id="qtde-baixa-creditos">0</span></span>
+          </label>
+        </div>
+      </div>
+      <div style="flex:1;">
+        <h4>Débitos Selecionados</h4>
+        <table id="tabela-baixa-debitos" class="display" style="width:100%">
+          <thead>
+            <tr>
+              <th>NF</th>
+              <th>Fornecedor</th>
+              <th>Valor</th>
+              <th>Vencimento</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div style="margin-top:8px;">
+          <label>Total de Débitos: <input type="text" id="total-baixa-debitos" readonly style="width:120px;">
+            <span style="margin-left:12px;">Qtde: <span id="qtde-baixa-debitos">0</span></span>
+          </label>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:16px;">
+      <label>Diferença (Crédito - Débito): <input type="text" id="diferenca-baixa" readonly style="width:120px;"></label>
+    </div>
+ 
+    <div id="pergunta-diferenca" style="display:none; margin-top:12px; color:#b85c00;">
+      <span id="texto-diferenca"></span>
+      <button type="button" id="btn-gerar-diferenca">Gerar diferença</button>
+      <button type="button" id="btn-nao-gerar-diferenca">Não gerar</button>
+    </div>
+    <div style="margin-top:18px; text-align:right;">
+      <button type="button" id="btn-cancelar-baixa">Cancelar</button>
+      <button type="button" id="btn-confirmar-baixa" class="btn btn-success">Confirmar Baixa</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Modal de Cadastro/Listagem de Fornecedor -->
+<div id="modal-fornecedor" class="modal" style="display:none;">
+  <div class="modal-content" style="max-width:520px;">
+    <h4>Cadastro de Fornecedor</h4>
+    <form id="form-fornecedor" style="display: flex; gap: 8px; margin-bottom: 12px;">
+      <input type="text" id="forn-codigo" class="form-control" placeholder="Código" style="width:80px;">
+      <input type="text" id="forn-nome" class="form-control" placeholder="Nome" style="flex:1;">
+      <button type="button" id="btn-cadastrar-fornecedor-modal" class="btn btn-primary">Cadastrar</button>
+      <button type="button" id="btn-pesquisar-fornecedor" class="btn btn-info">Pesquisar</button>
+      <button type="button" id="btn-excluir-fornecedor" class="btn btn-danger" disabled>Excluir</button>
+      <button type="button" id="btn-cancelar-fornecedor" class="btn btn-secondary">Cancelar</button>
+    </form>
+    <table id="tabela-fornecedores" class="display" style="width:100%; font-size:14px;">
+      <thead>
+        <tr>
+          <th style="width:80px;">Código</th>
+          <th>Nome</th>
+          <th>Posição Saldo</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Linhas serão preenchidas via JS -->
+      </tbody>
+    </table>
+  </div>
+</div>
+
+  <!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/colreorder/1.6.2/js/dataTables.colReorder.min.js"></script>
+  <script src="script.js"></script>
+  <script>
+    
+    
+  </script>
+</body>
+</html>

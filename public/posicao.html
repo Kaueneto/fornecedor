@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Posição Financeira do Fornecedor</title>
+  <link rel="stylesheet" href="posicao.css">
+</head>
+<body>
+  <h2>Posição Financeira do Fornecedor</h2>
+
+  <form id="form-filtros">
+    <div class="filtros-row">
+      <label>Fornecedor:
+        <input type="text" id="filtro-fornecedor" placeholder="Nome do Fornecedor">
+      </label>
+      <label>Período de:
+        <select id="filtro-tipo-data">
+          <option value="inclusao">Inclusão</option>
+          <option value="emissao">Emissão</option>
+          <option value="vencimento">Vencimento</option>
+        </select>
+      </label>
+      <label>Início:
+        <input type="date" id="filtro-inicio">
+      </label>
+      <label>Fim:
+        <input type="date" id="filtro-fim">
+      </label>
+      <button type="button" id="btn-pesquisar">Pesquisar</button>
+      <button type="button" id="btn-limpar">Limpar</button>
+    </div>
+  </form>
+
+  <table id="tabela-posicao">
+    <thead>
+      <tr>
+        <th>Fornecedor</th>
+        <th>Tipo</th>
+        <th>Situação</th>
+        <th>Qtde Títulos</th>
+        <th>Valor Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td colspan="5">Nenhum dado encontrado.</td></tr>
+    </tbody>
+  </table>
+
+  <script>
+    // Função para pegar a data local no formato YYYY-MM-DD
+    function dataHoje() {
+      return new Date().toLocaleDateString('fr-CA');
+    }
+    // Preencher datas padrão
+    document.getElementById('filtro-inicio').value = dataHoje();
+    document.getElementById('filtro-fim').value = dataHoje();
+
+    function formatarValorBR(valor) {
+      return Number(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function carregarPosicao() {
+      const fornecedor = document.getElementById('filtro-fornecedor').value;
+      const inicio = document.getElementById('filtro-inicio').value;
+      const fim = document.getElementById('filtro-fim').value;
+      const tipoData = document.getElementById('filtro-tipo-data').value;
+
+      fetch(`/api/posicao-financeira?fornecedor=${encodeURIComponent(fornecedor)}&inicio=${inicio}&fim=${fim}&tipoData=${tipoData}`)
+        .then(res => res.json())
+        .then(dados => {
+          const $tbody = document.querySelector('#tabela-posicao tbody');
+          $tbody.innerHTML = '';
+
+          function linha(fornecedor, tipo, situacao, info, corSaldo) {
+            return `<tr>
+              <td>${fornecedor || '-'}</td>
+              <td>${tipo}</td>
+              <td>${situacao}</td>
+              <td>${info.qtde}</td>
+              <td class="${corSaldo || ''}">${formatarValorBR(info.valor)}</td>
+            </tr>`;
+          }
+
+          // Se não houver dados, exibe mensagem
+          if (!dados || (!dados.abertoCredito.qtde && !dados.abertoDebito.qtde && !dados.pagoCredito.qtde && !dados.pagoDebito.qtde)) {
+            $tbody.innerHTML = '<tr><td colspan="5">Nenhum dado encontrado.</td></tr>';
+            return;
+          }
+
+          $tbody.innerHTML += linha(fornecedor, 'Crédito', 'Em Aberto', dados.abertoCredito, dados.abertoCredito.valor >= 0 ? 'saldo-positivo' : 'saldo-negativo');
+          $tbody.innerHTML += linha(fornecedor, 'Débito', 'Em Aberto', dados.abertoDebito, dados.abertoDebito.valor >= 0 ? 'saldo-positivo' : 'saldo-negativo');
+          $tbody.innerHTML += linha(fornecedor, 'Crédito', 'Pago', dados.pagoCredito, dados.pagoCredito.valor >= 0 ? 'saldo-positivo' : 'saldo-negativo');
+          $tbody.innerHTML += linha(fornecedor, 'Débito', 'Pago', dados.pagoDebito, dados.pagoDebito.valor >= 0 ? 'saldo-positivo' : 'saldo-negativo');
+        });
+    }
+
+    // Impede submit padrão do formulário
+    document.getElementById('form-filtros').addEventListener('submit', function(e) {
+      e.preventDefault();
+      carregarPosicao();
+    });
+
+    document.getElementById('btn-pesquisar').addEventListener('click', carregarPosicao);
+
+    document.getElementById('btn-limpar').addEventListener('click', () => {
+      document.getElementById('form-filtros').reset();
+      document.getElementById('filtro-inicio').value = dataHoje();
+      document.getElementById('filtro-fim').value = dataHoje();
+      carregarPosicao();
+    });
+
+    // Carrega ao abrir a página
+    carregarPosicao();
+  </script>
+</body>
+</html>

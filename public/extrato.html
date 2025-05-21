@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Extrato do Fornecedor</title>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; }
+    .filtros { display: flex; gap: 10px; margin-bottom: 16px; align-items: flex-end; }
+    .filtros > div { display: flex; flex-direction: column; }
+    .filtros label { font-size: 13px; }
+    .filtros input, .filtros select { padding: 2px 4px; }
+    .tabela-container { margin-top: 24px; }
+    /* Tabela clássica */
+    table.dataTable, table.dataTable th, table.dataTable td {
+      border: 1px solid #aaa !important;
+      border-collapse: collapse !important;
+    }
+    table.dataTable th, table.dataTable td {
+      padding: 6px 10px !important;
+      background: #fff;
+    }
+    table.dataTable th {
+      background: #f4f4f4;
+    }
+    /* Botão imprimir afastado */
+    #btn-imprimir {
+      margin-left: 32px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Extrato do Fornecedor</h2>
+  <form id="form-filtros" class="filtros">
+    <div>
+      <label for="filtro-codfornecedor">Fornecedor</label>
+      <input type="text" id="filtro-codfornecedor" style="width: 80px;">
+    </div>
+    <div>
+      <label for="filtro-nomefornecedor"></label>
+      <input type="text" id="filtro-nomefornecedor" style="width: 200px;">
+    </div>
+    <div>
+      <label for="filtro-tipo">Tipo Mov.</label>
+      <select id="filtro-tipo">
+        <option value="ambos">Ambos</option>
+        <option value="entrada">Entrada</option>
+        <option value="saida">Saída</option>
+      </select>
+    </div>
+    <div>
+      <label for="filtro-data-inicio">Período do Movimento</label>
+      <div style="display: flex; gap: 8px;">
+        <input type="date" id="filtro-data-inicio">
+        <span style="align-self: center;">até</span>
+        <input type="date" id="filtro-data-fim">
+      </div>
+    </div>
+    <div style="display: inline;">
+      <button type="submit">Pesquisar</button>
+      <button type="button" id="btn-limpar">Limpar</button>
+      <button type="button" id="btn-imprimir">Imprimir</button>
+    </div>
+  </form>
+
+  <div class="tabela-container">
+    <table id="tabela-extrato" class="display" style="width:100%">
+      <thead>
+        <tr>
+          <th>Cód. Fornecedor</th>
+          <th>Nome Fornecedor</th>
+          <th>Tipo Movimento</th>
+          <th>Data Movimento</th>
+          <th>Valor</th>
+          <th>Histórico</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script>
+    function formatarValor(v) {
+      return parseFloat(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function carregarExtrato(filtros = {}) {
+      fetch('/api/extrato')
+        .then(res => res.json())
+        .then(data => {
+          const filtrado = data.filter(item => {
+            if (filtros.codfornecedor && !(item.codFornecedor && item.codFornecedor.toLowerCase().includes(filtros.codfornecedor.toLowerCase()))) return false;
+            if (filtros.nomefornecedor && !(item.nomeFornecedor && item.nomeFornecedor.toLowerCase().includes(filtros.nomefornecedor.toLowerCase()))) return false;
+            if (filtros.tipo && filtros.tipo !== 'ambos' && item.tipoMovimento !== filtros.tipo) return false;
+            if (filtros.dataInicio && item.dataMovimento < filtros.dataInicio) return false;
+            if (filtros.dataFim && item.dataMovimento > filtros.dataFim) return false;
+            return true;
+          });
+
+          const tabela = $('#tabela-extrato').DataTable();
+          tabela.clear();
+          filtrado.forEach(item => {
+            tabela.row.add([
+              item.codFornecedor,
+              item.nomeFornecedor,
+              item.tipoMovimento,
+              item.dataMovimento,
+              formatarValor(item.valor),
+              item.historico
+            ]);
+          });
+          tabela.draw();
+        });
+    }
+
+    $(document).ready(function() {
+      $('#form-filtros').on('submit', function(e) {
+        e.preventDefault();
+        const filtros = {
+          codfornecedor: $('#filtro-codfornecedor').val(),
+          nomefornecedor: $('#filtro-nomefornecedor').val(),
+          tipo: $('#filtro-tipo').val(),
+          dataInicio: $('#filtro-data-inicio').val(),
+          dataFim: $('#filtro-data-fim').val()
+        };
+        carregarExtrato(filtros);
+      });
+
+      $('#btn-limpar').on('click', function() {
+        $('#form-filtros')[0].reset();
+        carregarExtrato();
+      });
+
+      $('#btn-imprimir').on('click', function() {
+        window.print();
+      });
+
+      $('#tabela-extrato').DataTable({
+        paging: false,
+        searching: false,
+        info: false,
+        ordering: true,
+        scrollX: true
+      });
+
+      carregarExtrato();
+    });
+  </script>
+</body>
+</html>
