@@ -115,40 +115,30 @@ app.post('/api/lancamentos', (req, res) => {
   res.status(201).json(novo);
 });
 
-// PUT: atualiza um lançamento existente
+// Atualizar lançamento por ID
 app.put('/api/lancamentos/:id', (req, res) => {
-  const { id } = req.params;
-  const lancamentosPath = path.join(__dirname, 'lancamentos.jsonl');
-
+  const id = req.params.id;
+  const atualizado = req.body;
   try {
-    // Ler todos os lançamentos do arquivo JSONL
-    const lancamentos = fs
-      .readFileSync(lancamentosPath, 'utf8')
+    if (!fs.existsSync(lancamentosPath)) return res.status(404).end();
+    const raw = fs.readFileSync(lancamentosPath, 'utf8');
+    const lancamentos = raw
       .split('\n')
-      .filter(line => line.trim() !== '') // Remove linhas vazias
-      .map(line => JSON.parse(line)); // Converte cada linha em objeto JSON
-
-    // Encontrar o índice do lançamento a ser atualizado
-    const index = lancamentos.findIndex(l => String(l.id) === String(id));
-    if (index === -1) {
-      console.warn('Lançamento não encontrado:', id);
-      return res.status(404).send('Lançamento não encontrado');
-    }
-
-    // Atualizar o lançamento
-    lancamentos[index] = { ...lancamentos[index], ...req.body };
-
-    // Reescrever o arquivo JSONL com os lançamentos atualizados
-    fs.writeFileSync(
-      lancamentosPath,
-      lancamentos.map(l => JSON.stringify(l)).join('\n') + '\n'
-    );
-
-    console.log('Lançamento atualizado no JSONL:', lancamentos[index]);
-    res.json(lancamentos[index]);
+      .filter(line => line.trim() !== '')
+      .map(line => JSON.parse(line));
+    let encontrado = false;
+    const novos = lancamentos.map(l => {
+      if (String(l.id) === String(id)) {
+        encontrado = true;
+        return { ...l, ...atualizado };
+      }
+      return l;
+    });
+    if (!encontrado) return res.status(404).json({ erro: 'Lançamento não encontrado' });
+    fs.writeFileSync(lancamentosPath, novos.map(l => JSON.stringify(l)).join('\n') + '\n');
+    res.json(atualizado);
   } catch (err) {
-    console.error('Erro ao atualizar no JSONL:', err);
-    res.status(500).send('Erro ao atualizar o lançamento.');
+    res.status(500).json({ erro: 'Erro ao atualizar lançamento' });
   }
 });
 
@@ -323,13 +313,13 @@ app.get('/api/fornecedores', (req, res) => {
   try {
     if (!fs.existsSync(fornecedoresPath)) return res.json([]);
     const raw = fs.readFileSync(fornecedoresPath, 'utf8');
-    const fornecedores = raw
+    const lista = raw
       .split('\n')
       .filter(line => line.trim() !== '')
       .map(line => JSON.parse(line));
-    res.json(fornecedores);
+    res.json(lista); // saldo deve estar presente em cada objeto
   } catch (err) {
-    res.status(500).json([]);
+    res.status(500).json({ erro: 'Erro ao ler fornecedores' });
   }
 });
 
@@ -348,5 +338,21 @@ app.delete('/api/fornecedores/:codigo', (req, res) => {
     res.status(204).end();
   } catch (err) {
     res.status(500).end();
+  }
+});
+
+app.get('/api/extrato', (req, res) => {
+  try {
+    // Supondo que o extrato está no arquivo 'extrato.jsonl' ou pode ser gerado a partir dos lançamentos
+    const extratoPath = path.join(__dirname, 'extrato.jsonl');
+    if (!fs.existsSync(extratoPath)) return res.json([]);
+    const raw = fs.readFileSync(extratoPath, 'utf8');
+    const lista = raw
+      .split('\n')
+      .filter(line => line.trim() !== '')
+      .map(line => JSON.parse(line));
+    res.json(lista);
+  } catch (err) {
+    res.status(500).json({ erro: 'Erro ao ler extrato' });
   }
 });

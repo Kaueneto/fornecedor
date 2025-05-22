@@ -5,27 +5,187 @@
   <title>Extrato do Fornecedor</title>
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
   <style>
-    body { font-family: Arial, sans-serif; margin: 24px; }
-    .filtros { display: flex; gap: 10px; margin-bottom: 16px; align-items: flex-end; }
-    .filtros > div { display: flex; flex-direction: column; }
-    .filtros label { font-size: 13px; }
-    .filtros input, .filtros select { padding: 2px 4px; }
-    .tabela-container { margin-top: 24px; }
-    /* Tabela clássica */
-    table.dataTable, table.dataTable th, table.dataTable td {
-      border: 1px solid #aaa !important;
-      border-collapse: collapse !important;
+    body {
+      font-family: 'Roboto', Arial, sans-serif;
+      background: #f8f8f8;
+      margin: 0;
+      padding: 24px;
     }
-    table.dataTable th, table.dataTable td {
-      padding: 6px 10px !important;
+    .filtros {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 18px;
+      align-items: flex-end;
       background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px #0001;
+      padding: 18px 16px 10px 16px;
+      max-width: 1199px;
     }
-    table.dataTable th {
-      background: #f4f4f4;
+    .filtros > div { display: flex; flex-direction: column; }
+    .filtros label { font-size: 15px; color: #444; margin-bottom: 4px; }
+    .filtros input, .filtros select {
+      padding: 6px 10px;
+      border: 1px solid #bbb;
+      border-radius: 4px;
+      font-size: 15px;
+      margin-top: 2px;
+      background: #fafbfc;
+      transition: border 0.2s;
     }
-    /* Botão imprimir afastado */
-    #btn-imprimir {
-      margin-left: 32px;
+    .filtros input:focus, .filtros select:focus {
+      border-color: #1976d2;
+      outline: none;
+    }
+    .tabela-container {
+      margin-top: 24px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px #0001;
+      padding: 18px 12px;
+      max-width: 1100px;
+    }
+    table.dataTable {
+      border-collapse: separate !important;
+      border-spacing: 0;
+      width: 100%;
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px #0001;
+    }
+    table.dataTable thead th {
+      background: #bfbfc5;
+      color: #222;
+      font-weight: 600;
+      border-bottom: 2px solid #d2d8e6;
+      padding: 14px 10px;
+      font-size: 16px;
+      letter-spacing: 0.02em;
+    }
+    table.dataTable tbody td {
+      border-bottom: 1px solid #f0f0f0;
+      padding: 12px 10px;
+      font-size: 15px;
+      color: #333;
+      background: #fcfcff;
+      transition: background 0.2s;
+    }
+    table.dataTable tbody tr:last-child td {
+      border-bottom: none;
+    }
+    table.dataTable tbody tr:hover td {
+      background: #f5faff;
+    }
+
+    .tabela-container h3 {
+      color: #444;
+      font-weight: 400;
+      margin-bottom: 12px;
+    }
+    button, input[type="submit"] {
+      background: #1976d2;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 7px 18px;
+      font-size: 15px;
+      cursor: pointer;
+      margin-right: 8px;
+      transition: background 0.2s;
+    }
+        /* Destaca campos readonly */
+    .filtros input[readonly] {
+      background: #b9c6eb !important;
+      color: #000000;
+      cursor: not-allowed;
+    }
+
+    button#btn-limpar {
+      background: #e0e0e0;
+      color: #444;
+    }
+    button#btn-imprimir {
+      background: #43a047;
+      color: #fff;
+    }
+    button:hover, input[type="submit"]:hover {
+      background: #1256a0;
+    }
+    button#btn-limpar:hover {
+      background: #8a8787;
+    }
+    button#btn-imprimir:hover {
+      background: #2e7031;
+    }
+    @media print {
+      body {
+        background: #fff !important;
+      }
+      .filtros, .botoes-filtros, button, #btn-limpar, #btn-imprimir, #btn-pesquisar {
+        display: none !important;
+      }
+      #cabecalho-impressao {
+        display: block !important;
+        margin-bottom: 18px;
+        font-size: 16px;
+        color: #222;
+      }
+      .tabela-container {
+        box-shadow: none !important;
+        padding: 0 !important;
+        background: #fff !important;
+      }
+      table.dataTable {
+        box-shadow: none !important;
+        border-radius: 0 !important;
+      }
+      @page {
+        size: landscape;
+        margin: 16mm 10mm 10mm 10mm;
+      }
+      table.dataTable {
+        width: 100% !important;
+        max-width: 100% !important;
+        table-layout: auto !important;
+        overflow: visible !important;
+        display: table !important;
+      }
+      .dataTables_scrollBody, .dataTables_scrollHead {
+        overflow: visible !important;
+        max-height: none !important;
+      }
+      /* Remove bordas e fundo da tabela */
+      table.dataTable, table.dataTable thead, table.dataTable tbody, table.dataTable th, table.dataTable td, table.dataTable tr {
+        all: unset;
+        display: revert;
+        background: none !important;
+        color: #000 !important;
+        font-size: 14px !important;
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      /* Cada linha da tabela vira um bloco separado por uma linha preta */
+      table.dataTable tbody tr {
+        display: block;
+        border-bottom: 2px solid #000 !important;
+        margin-bottom: 8px;
+        padding-bottom: 4px;
+        page-break-inside: avoid;
+      }
+      table.dataTable thead {
+        display: none !important; /* Esconde o cabeçalho da tabela */
+      }
+      table.dataTable td {
+        display: inline-block;
+        min-width: 120px;
+        margin-right: 24px;
+        vertical-align: top;
+        font-size: 14px !important;
+        padding: 0 !important;
+      }
     }
   </style>
 </head>
@@ -38,8 +198,7 @@
     </div>
     <div>
       <label for="filtro-nomefornecedor"></label>
-      <input type="text" id="filtro-nomefornecedor" style="width: 200px;">
-    </div>
+      <input type="text" id="filtro-nomefornecedor" style="width: 200px;" readonly>    </div>
     <div>
       <label for="filtro-tipo">Tipo Mov.</label>
       <select id="filtro-tipo">
@@ -56,15 +215,23 @@
         <input type="date" id="filtro-data-fim">
       </div>
     </div>
-    <div style="display: inline;">
+    <div class="botoes-filtros" style="display: inline ;">
       <button type="submit">Pesquisar</button>
       <button type="button" id="btn-limpar">Limpar</button>
       <button type="button" id="btn-imprimir">Imprimir</button>
     </div>
   </form>
 
+  <div id="cabecalho-impressao" style="margin-bottom: 18px;">
+    <strong>Cód. Fornecedor:</strong> <span id="print-codfornecedor"></span> &nbsp;
+    <strong>Nome Fornecedor:</strong> <span id="print-nomefornecedor"></span> &nbsp;
+    <strong>Tipo Movimento:</strong> <span id="print-tipomov"></span> &nbsp;
+    <strong>Período:</strong> <span id="print-periodo"></span>
+  </div>
+
   <div class="tabela-container">
-    <table id="tabela-extrato" class="display" style="width:100%">
+ 
+    <table id="tabela-extrato" class="display nowrap" style="width:100%">
       <thead>
         <tr>
           <th>Cód. Fornecedor</th>
@@ -72,6 +239,7 @@
           <th>Tipo Movimento</th>
           <th>Data Movimento</th>
           <th>Valor</th>
+          <th>Saldo</th>
           <th>Histórico</th>
         </tr>
       </thead>
@@ -86,33 +254,48 @@
       return parseFloat(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     }
 
-    function carregarExtrato(filtros = {}) {
-      fetch('/api/extrato')
-        .then(res => res.json())
-        .then(data => {
-          const filtrado = data.filter(item => {
-            if (filtros.codfornecedor && !(item.codFornecedor && item.codFornecedor.toLowerCase().includes(filtros.codfornecedor.toLowerCase()))) return false;
-            if (filtros.nomefornecedor && !(item.nomeFornecedor && item.nomeFornecedor.toLowerCase().includes(filtros.nomefornecedor.toLowerCase()))) return false;
-            if (filtros.tipo && filtros.tipo !== 'ambos' && item.tipoMovimento !== filtros.tipo) return false;
-            if (filtros.dataInicio && item.dataMovimento < filtros.dataInicio) return false;
-            if (filtros.dataFim && item.dataMovimento > filtros.dataFim) return false;
-            return true;
-          });
+    function formatarDataBR(data) {
+      if (!data) return '';
+      const [y, m, d] = data.split('-');
+      return `${d}/${m}/${y}`;
+    }
 
-          const tabela = $('#tabela-extrato').DataTable();
-          tabela.clear();
-          filtrado.forEach(item => {
-            tabela.row.add([
-              item.codFornecedor,
-              item.nomeFornecedor,
-              item.tipoMovimento,
-              item.dataMovimento,
-              formatarValor(item.valor),
-              item.historico
-            ]);
-          });
-          tabela.draw();
-        });
+    async function carregarExtrato(filtros = {}) {
+      const resp = await fetch('/api/extrato');
+      const data = await resp.json();
+
+      const filtrado = data.filter(item => {
+        if (filtros.codfornecedor && !(item.codFornecedor && item.codFornecedor.toLowerCase().includes(filtros.codfornecedor.toLowerCase()))) return false;
+        if (filtros.nomefornecedor && !(item.nomeFornecedor && item.nomeFornecedor.toLowerCase().includes(filtros.nomefornecedor.toLowerCase()))) return false;
+ if (filtros.tipo && filtros.tipo !== 'ambos' && item.tipoMov !== filtros.tipo) return false;
+if (filtros.dataInicio && item.dataMov < filtros.dataInicio) return false;
+if (filtros.dataFim && item.dataMov > filtros.dataFim) return false;
+        return true;
+      });
+
+      const tabela = $('#tabela-extrato').DataTable();
+      tabela.clear();
+      filtrado.forEach(item => {  
+        tabela.row.add([
+          item.codFornecedor,
+          item.nomeFornecedor,
+          item.tipoMov,
+          formatarDataBR(item.dataMov),
+          formatarValor(item.valor),
+          formatarValor(item.saldo),
+          item.historico || ''
+        ]);
+      });
+      tabela.draw();
+    }
+
+    function atualizarCabecalhoImpressao() {
+      $('#print-codfornecedor').text($('#filtro-codfornecedor').val());
+      $('#print-nomefornecedor').text($('#filtro-nomefornecedor').val());
+      $('#print-tipomov').text($('#filtro-tipo option:selected').text());
+      let inicio = $('#filtro-data-inicio').val();
+      let fim = $('#filtro-data-fim').val();
+      $('#print-periodo').text(inicio && fim ? `${inicio} até ${fim}` : '');
     }
 
     $(document).ready(function() {
@@ -126,11 +309,13 @@
           dataFim: $('#filtro-data-fim').val()
         };
         carregarExtrato(filtros);
+        atualizarCabecalhoImpressao();
       });
 
       $('#btn-limpar').on('click', function() {
         $('#form-filtros')[0].reset();
         carregarExtrato();
+        atualizarCabecalhoImpressao();
       });
 
       $('#btn-imprimir').on('click', function() {
@@ -145,7 +330,46 @@
         scrollX: true
       });
 
+      $('#filtro-codfornecedor').on('input', function() {
+        const codigo = $(this).val().trim();
+        if (!codigo) {
+          $('#filtro-nomefornecedor').val('');
+          return;
+        }
+        $.get('/api/fornecedores', function(lista) {
+          const fornecedor = lista.find(f => f.codigo.toLowerCase() === codigo.toLowerCase());
+          if (fornecedor) {
+            $('#filtro-nomefornecedor').val(fornecedor.nome);
+          } else {
+            $('#filtro-nomefornecedor').val('');
+          }
+        });
+      });
+
       carregarExtrato();
+      atualizarCabecalhoImpressao();
+    });
+
+ 
+
+    $('#tabela-extrato').DataTable({
+      data: lista,
+      columns: [
+        { data: 'codFornecedor' },
+        { data: 'nomeFornecedor' },
+        { data: 'tipoMov' },
+        { data: 'dataMov' },
+        { data: 'valor',
+          render: function(data) {
+            return Number(data).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+          }
+        },
+        { data: 'saldo',
+          render: function(data) {
+            return Number(data).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+          }
+        }
+      ]
     });
   </script>
 </body>

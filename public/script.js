@@ -202,10 +202,12 @@ tabelaDebitos.draw();
     $('#form-editar').on('submit', function (e) {
       e.preventDefault();
       const id = $('#edit-id').val();
-      console.log('Enviando PUT para ID:', id);
+      const novoTipo = $('#edit-tipo').val();
 
+      // Pegue os dados atualizados
       const atualizado = {
-        tipo: $('#edit-tipo').val(),
+        id,
+        tipo: novoTipo,
         dataInclusao: $('#edit-inclusao').val(),
         dataVencimento: $('#edit-vencimento').val(),
         NF: $('#edit-nf').val(),
@@ -216,28 +218,37 @@ tabelaDebitos.draw();
         nomeFornecedor: $('#edit-nomefornecedor').val(),
         historico: $('#edit-historico').val(),
         observacoes: $('#edit-observacoes').val(),
-        transacao: $('#edit-transacao').val(),
-        dataPagamento: $('#edit-dataPagamento').val(),
+        transacao: $('#edit-transacao').val() || '',
+        dataPagamento: $('#edit-dataPagamento').val() || ''
       };
 
-console.log('Enviando para o backend:', novoLancamento);
-fetch('/api/lancamentos', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(novoLancamento)
-})
-        .then(res => {
-          if (!res.ok) throw new Error('Falha ao salvar');
-          return res.json();
-        })
-        .then(() => {
-          console.log('Atualização concluída');
-          $('#modal-editar').fadeOut();
-          carregarDados();
-        })
-        .catch(err => {
-          console.error('Erro ao enviar PUT:', err);
-          alert('Erro ao salvar alterações.');
+      // Buscar o lançamento original para comparar o tipo
+      fetch('/api/lancamentos')
+        .then(res => res.json())
+        .then(lancamentos => {
+          const original = lancamentos.find(l => l.id == id);
+          if (!original) {
+            alert('Lançamento não encontrado.');
+            return;
+          }
+
+          // Se o tipo mudou, recarregue os dados após salvar
+          fetch('/api/lancamentos/' + atualizado.id, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(atualizado)
+          })
+          .then(res => {
+            if (!res.ok) throw new Error('Falha ao salvar');
+            return res.json();
+          })
+          .then(() => {
+            $('#modal-editar').fadeOut();
+            carregarDados();
+          })
+          .catch(err => {
+            alert('Erro ao salvar alterações.');
+          });
         });
     });
 
@@ -590,7 +601,7 @@ $(document).ready(function () {
       const tbody = $('#tabela-fornecedores tbody');
       tbody.empty();
       filtrado.forEach(f => {
-        tbody.append(`<tr data-codigo="${f.codigo}" data-nome="${f.nome}"><td>${f.codigo}</td><td>${f.nome}</td><td>${f.saldo !== undefined ? f.saldo : '--'}</td></tr>`);
+        tbody.append(`<tr data-codigo="${f.codigo}" data-nome="${f.nome}"><td>${f.codigo}</td><td>${f.nome}</td><td>${formatarMoeda(f.posicaoSaldo)}</td></tr>`);
       });
       $('#btn-excluir-fornecedor').prop('disabled', true);
     });
@@ -639,5 +650,30 @@ $(document).ready(function () {
     });
   });
 });
+
+// Autopreencher nome do fornecedor no modal de inclusão ao digitar o código
+$('#inc-codfornecedor').on('input blur', function(e) {
+  const codigo = $(this).val().trim();
+  if (!codigo) {
+    // Só limpa se o campo nome não estiver em foco
+    if (!$('#inc-nomefornecedor').is(':focus')) {
+      $('#inc-nomefornecedor').val('');
+    }
+    return;
+  }
+  $.get('/api/fornecedores', function(lista) {
+    const fornecedor = lista.find(f => f.codigo.toLowerCase() === codigo.toLowerCase());
+    if (fornecedor) {
+      $('#inc-nomefornecedor').val(fornecedor.nome);
+    } else if (!$('#inc-nomefornecedor').is(':focus')) {
+      $('#inc-nomefornecedor').val('');
+    }
+  });
+});
+
+function formatarMoeda(valor) {
+  if (valor === undefined || valor === null || valor === '') return '--';
+  return Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
 
 

@@ -8,7 +8,19 @@
   <link rel="stylesheet" href="https://cdn.datatables.net/colreorder/1.6.2/css/colReorder.dataTables.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="estilos.css">
+<style>
+  #inc-tipo, #edit-tipo {
+    width: 100px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    border: 1px solid #bbb;
+    font-size: 15px;
+  }
 
+    #tabela-fornecedores td:last-child, #tabela-fornecedores th:last-child {
+    text-align: right;
+  }
+</style>
 </head>
 
 
@@ -17,12 +29,13 @@
 
   <!-- Botões principais -->
   <div>
-<button id="btn-cadastrar-fornecedor">Cadastrar fornecedor</button>    <button id="btn-novo" class="btn btn-success">Novo</button>
+<button id="btn-cadastrar-fornecedor" style="height: 30px; ">Cadastrar fornecedor</button> 
+   <button id="btn-novo" class="btn btn-success" style="height: 30px; ">Novo</button>
     <a href="titulos.html" target="_blank">
-      <button id="btn-titulos">Títulos Baixados</button>
+      <button id="btn-titulos" style="height: 30px; ">Títulos Baixados</button>
     </a>
-    <a href="posicao.html" target="_blank">
-      <button id="btn-posicao-financeira">Extrato</button>
+    <a href="extrato.html" target="_blank">
+      <button id="btn-extrato" style="height: 30px; ">Extrato</button>
     </a>
   </div>
 
@@ -154,12 +167,13 @@
   <h3>Editar Lançamento</h3>
   <form id="form-editar">
     <input type="hidden" id="edit-id">
-
-    <div class="form-group radio-inline" style="margin-bottom: 12px;">
-      <label>Tipo lançamento:</label>
-      <label><input type="radio" name="edit-tipo" value="credito" required> <strong>Crédito</strong></label>
-      <label><input type="radio" name="edit-tipo" value="debito" required> <strong>Débito</strong></label>
-    </div>
+<div class="form-group" style="height: 60px;">
+  <label for="edit-tipo">Tipo lançamento:</label>
+  <select id="edit-tipo" name="inc-tipo" required>
+    <option value="credito">Crédito</option>
+    <option value="debito">Débito</option>
+  </select>
+</div>
 
     <div class="linha-dupla">
       <label>Fornecedor:</label>
@@ -172,7 +186,7 @@
     <div class="linha-tripla">
       <label>ValorㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤData EmissãoㅤㅤㅤㅤㅤㅤData Vencimento:</label>
       <div class="campo-triplo">
-        <input type="number" id="edit-valor" step="0.01" placeholder="Valor">
+        <input type="number" id="edit-valor" step="0.01" placeholder="Valor" readonly>
         <input type="date" id="edit-emissao">
         <input type="date" id="edit-vencimento">
       </div>
@@ -215,7 +229,7 @@
     <h4>Incluir Novo Lançamento</h4>
     <form id="form-incluir">
 
-  <div class="form-group radio-inline">
+  <div class="form-group" style="display: inline;">
     <label>Tipo lançamento:</label>
     <label><input type="radio" name="inc-tipo" value="credito" required checked> <strong>Crédito</strong></label>
     <label><input type="radio" name="inc-tipo" value="debito" required> <strong>Débito</strong></label>
@@ -231,9 +245,9 @@
           <label for="inc-codfornecedor">Código Fornecedor:</label>
           <input type="text" id="inc-codfornecedor" class="form-control" required>
         </div>
-        <div class="form-group large-input">
+        <div class="form-group large-input" readonly>
           <label for="inc-nomefornecedor">Nome Fornecedor:</label>
-          <input type="text" id="inc-nomefornecedor" class="form-control" required>
+          <input type="text" id="inc-nomefornecedor" class="form-control" required readonly style="background: #f0f0f0; color: #888; cursor: not-allowed;">
         </div>
       </div>
 
@@ -363,7 +377,7 @@
     <table id="tabela-fornecedores" class="display" style="width:100%; font-size:14px;">
       <thead>
         <tr>
-          <th style="width:80px;">Código</th>
+          <th style="width:70px;">Código</th>
           <th>Nome</th>
           <th>Posição Saldo</th>
         </tr>
@@ -381,8 +395,38 @@
   <script src="https://cdn.datatables.net/colreorder/1.6.2/js/dataTables.colReorder.min.js"></script>
   <script src="script.js"></script>
   <script>
-    
-    
+    let fornecedores = {};
+
+    async function carregarFornecedores() {
+      try {
+        const resp = await fetch('fornecedores.jsonl');
+        const texto = await resp.text();
+        texto.split('\n').forEach(linha => {
+          if (linha.trim()) {
+            const obj = JSON.parse(linha);
+            fornecedores[obj.codigo] = obj.nome;
+          }
+        });
+      } catch (e) {
+        console.error('Erro ao carregar fornecedores:', e);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      carregarFornecedores();
+
+      const codInput = document.getElementById('inc-codfornecedor');
+      const nomeInput = document.getElementById('inc-nomefornecedor');
+
+      codInput.addEventListener('blur', function() {
+        const codigo = codInput.value.trim();
+        if (fornecedores[codigo]) {
+          nomeInput.value = fornecedores[codigo];
+        } else {
+          nomeInput.value = '';
+        }
+      });
+    });
   </script>
 </body>
 </html>

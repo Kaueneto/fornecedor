@@ -269,7 +269,7 @@ align-items: center;
   justify-content: center;
   position: fixed;
   left: 0; top: 0; width: 100vw; height: 100vh;
-  background: rgba(61, 51, 80, 0.18);
+  background: rgba(63, 53, 82, 0.18);
   z-index: 2000;
   backdrop-filter: blur(4px); /* <-- aqui faz o fundo borrar */
 }
@@ -285,14 +285,6 @@ align-items: center;
   padding: 24px 20px 18px 20px;
   margin: 0 auto;
 
-}
-
-
-
-/* Adicione ao estilos.css */
-.radio-inline {
-  display: flex;
-  
 }
 
 
